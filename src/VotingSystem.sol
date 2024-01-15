@@ -11,10 +11,11 @@ contract VotingSystem {
     }
 
     // Struct to represent a registered voter
-    struct Voter {
+    /** @audit Struct Packing:Efficient declaration of variables in struct allowing each struct to take upto two storage slots  */
+    struct Voter {              
         bool hasVoted;
-        uint votedCandidateId;
         bool isRegistered;
+        uint votedCandidateId;
     }
 
     // Array to store candidate IDs
@@ -41,8 +42,10 @@ contract VotingSystem {
         require(msg.sender == owner, "Only the owner can perform this action");
         _;
     }
-
-    constructor() {
+        /** @audit Constructors can be marked as payable to save deployment gas
+Payable functions cost less gas to execute, because the compiler does not have to add extra checks to ensure that no payment is provided. A constructor can be safely marked as payable, because only the deployer would be able to pass funds, and the project itself would not pass any funds.
+**/
+    constructor() payable{
         owner = msg.sender;
     }
 
@@ -84,7 +87,7 @@ contract VotingSystem {
         voters[msg.sender].hasVoted = true;
         voters[msg.sender].votedCandidateId = _candidateId;
         candidates[_candidateId].voteCount++;
-        totalVotes++;
+        ++totalVotes;                                       // @audit pre-increment costs least gas
         emit VoteCasted(msg.sender, _candidateId);
     }
 
@@ -114,7 +117,7 @@ contract VotingSystem {
         uint _winnerVoteCount = 0;
         string memory _winnerName = "";
 
-        for (uint i ; i < candidateCount; ++i) {
+        for (uint i ; i < candidateCount; ++i) {            // @audit Optimized For loop
             uint candidateId = candidateIds[i];
             Candidate memory candidate = candidates[candidateId];
             if(_winnerVoteCount < candidate.voteCount)
